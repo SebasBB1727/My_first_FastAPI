@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Notas Inteligentes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+    <main class="container">
+        <h1>Sistema de Notas con IA</h1>
+        
+        <article id="seccion-login">
+            <h3>Iniciar Sesión</h3>
+            <input type="text" id="username" placeholder="Nombre de usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button onclick="hacerLogin()">Entrar</button>
+            <p id="login-error" style="color: red;"></p>
+        </article>
+
+        <article id="seccion-notas" style="display: none;">
+            <h3>Crear una Nota Nueva</h3>
+            <input type="text" id="titulo-nota" placeholder="Título de la nota">
+            <textarea id="contenido-nota" placeholder="Escribe tu nota aquí... La IA la resumirá"></textarea>
+            <button onclick="crearNota()">Guardar Nota</button>
+            
+            <hr>
+            <h3>Mis Notas</h3>
+            <button class="secondary" onclick="obtenerMisNotas()">Actualizar Lista</button>
+            <div id="lista-notas"></div> 
+        </article>
+    </main>
+
+    <script>
+        // Esta es la URL de tu API local
+        const API_URL = "http://localhost:8000"; 
+        let token = ""; // Aquí guardaremos el JWT temporalmente
+
+        // --- FUNCIÓN PARA LOGIN ---
+        async function hacerLogin() {
+            const user = document.getElementById("username").value;
+            const pass = document.getElementById("password").value;
+            
+            // OAuth2 exige que los datos se envíen como Formulario, no como JSON
+            const formData = new URLSearchParams();
+            formData.append("username", user);
+            formData.append("password", pass);
+
+            // Fetch es la herramienta nativa para hacer peticiones HTTP
+            const respuesta = await fetch(`${API_URL}/login/`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (respuesta.ok) {
+                const datos = await respuesta.json();
+                token = datos.access_token; // Guardamos el gafete
+                
+                // Ocultamos el login y mostramos las notas
+                document.getElementById("seccion-login").style.display = "none";
+                document.getElementById("seccion-notas").style.display = "block";
+                obtenerMisNotas(); // Cargamos las notas automáticamente
+            } else {
+                document.getElementById("login-error").innerText = "Usuario o contraseña incorrectos";
+            }
+        }
+
+        // --- FUNCIÓN PARA VER NOTAS ---
+        async function obtenerMisNotas() {
+            const respuesta = await fetch(`${API_URL}/notes/`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}` // <--- ¡Le pegamos el gafete al guardia!
+                }
+            });
+
+            if (respuesta.ok) {
+                const notas = await respuesta.json();
+                const contenedor = document.getElementById("lista-notas");
+                contenedor.innerHTML = ""; // Limpiamos la lista
+
+                // Recorremos la lista que nos dio tu FastAPI
+                notas.forEach(nota => {
+                    contenedor.innerHTML += `
+                        <details>
+                            <summary><strong>${nota.titulo}</strong></summary>
+                            <p><em>Resumen IA: ${nota.nota}</em></p>
+                            <p>${nota.contenido}</p>
+                        </details>
+                    `;
+                });
+            }
+        }
+
+        // --- FUNCIÓN PARA CREAR NOTA (CON IA) ---
+        async function crearNota() {
+            const titulo = document.getElementById("titulo-nota").value;
+            const contenido = document.getElementById("contenido-nota").value;
+
+            // Esta vez enviamos un JSON, igual que en Swagger
+            const respuesta = await fetch(`${API_URL}/notes/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // <--- El guardia exige el gafete
+                },
+                body: JSON.stringify({ titulo: titulo, contenido: contenido, nota: "" })
+            });
+
+            if (respuesta.ok) {
+                // Borramos las cajas de texto y actualizamos la lista
+                document.getElementById("titulo-nota").value = "";
+                document.getElementById("contenido-nota").value = "";
+                obtenerMisNotas(); 
+                alert("Nota guardada e IA ejecutada con éxito!");
+            }
+        }
+    </script>
+</body>
+</html>
