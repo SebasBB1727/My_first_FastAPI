@@ -25,4 +25,4 @@ EXPOSE 8000
 # 7. LA ORDEN DE ARRANQUE
 # Esto es lo que ejecuta el contenedor cuando lo encienden. 
 # IMPORTANTE: Usamos --host 0.0.0.0 para que el servidor acepte conexiones desde afuera de la caja.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
