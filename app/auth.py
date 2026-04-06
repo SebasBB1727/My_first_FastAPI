@@ -21,11 +21,11 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "clave_de_respaldo_no_segura")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-CRYPT_SCHEMA = os.getenv("CRYPT_SCHEMA")
+CRYPT_SCHEMA = os.getenv("CRYPT_SCHEMA", "bcrypt")
 
 #Aqui le estamos diciendo que encriptador usara, el eschema o metodo, bcrypt es el bueno por excelencia, deprecated es
 #por si se usan 2 metodos de encriptacion distintos, use ambos para la validacion de contrasenias
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated= "auto")
+pwd_context = CryptContext(schemes=[CRYPT_SCHEMA], deprecated= "auto")
 
 #Realiza un hash a la contrasenia aplicando un "salt" para asegurar la diferencia entre 2 contrasenias iguales
 def get_password_hash(password: str) -> str:
